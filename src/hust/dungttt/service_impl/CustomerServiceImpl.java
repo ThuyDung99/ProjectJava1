@@ -8,6 +8,8 @@ import java.util.*;
 
 public class CustomerServiceImpl implements CustomerService {
 
+    private ReadWriteFileServiceImpl readWriteFileServiceImpl = new ReadWriteFileServiceImpl();
+
     Scanner sc = new Scanner(System.in);
     String textRegexFullName = "^(\\s*)(\\w+\\s+)+(\\w+\\s*)$";
     String textRegexPass= "((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@$%^+=])).{8,}"; //Password có 8 ký tự trở lên, ít nhất 1 chữ hoa, 1 ký tự đặc biệt, 1 số
@@ -106,11 +108,54 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    public boolean readFileCustomer() {
+        boolean rs = false;
+        try {
+            List<String> listString = readWriteFileServiceImpl.readFileText(AppConfig.FILE_CUSTOMER);
+            AppConfig.listCustomer = new ArrayList<>();
+            if(!listString.isEmpty()) {
+                for (String s: listString) {
+                    String[] listS = s.trim().split("#");
+                    Customer customer = new Customer(Integer.parseInt(listS[0]),
+                            listS[1], listS[2],
+                            listS[3],listS[4],
+                            listS[5],listS[6],
+                            listS[7],Integer.parseInt(listS[8]),
+                            Double.parseDouble(listS[9]),
+                            Integer.parseInt(listS[10]),
+                            new Date(Long.parseLong(listS[11])),new Date(Long.parseLong(listS[12])),Boolean.valueOf(listS[13]));
+                    AppConfig.listCustomer.add(customer);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rs;
+    }
+
+    @Override
+    public boolean writeFileCustomer() {
+        boolean rs = false;
+        try {
+            List<String> listString = new ArrayList<>();
+            for (Customer customer: AppConfig.listCustomer) {
+                listString.add(customer.toStringFile());
+            }
+            readWriteFileServiceImpl.writeFileText(AppConfig.FILE_CUSTOMER, listString);
+            rs = true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rs;
+    }
+
+    @Override
     public Customer insert() {
         Customer cus = new Customer(AppConfig.countCus++,checkUsernameInsert(),checkPasswordInsert(),checkFullName(),checkDateOfBirth(),
                 checkAddress(),checkPhone(),checkEmail(), 0, 0, 0,
                 new Date(),new Date(),false);
         AppConfig.listCustomer.add(cus);
+        writeFileCustomer();
         System.out.println("***** Thêm thành công *****");
         return cus;
     }
@@ -128,8 +173,6 @@ public class CustomerServiceImpl implements CustomerService {
         if(cusFix == null){
         return null;
         }
-        cusFix.setUsername(customer.getUsername());
-        cusFix.setPassword(customer.getPassword());
         cusFix.setAddress(customer.getAddress());
         cusFix.setDateOfBirth(customer.getDateOfBirth());
         cusFix.setEmail(customer.getEmail());
@@ -139,6 +182,7 @@ public class CustomerServiceImpl implements CustomerService {
         cusFix.setPhoneNumber(customer.getPhoneNumber());
         cusFix.setProductQuantity(customer.getProductQuantity());
         cusFix.setModifyDate(new Date());
+        writeFileCustomer();
         return cusFix;
     }
 
@@ -146,7 +190,7 @@ public class CustomerServiceImpl implements CustomerService {
     public List<Customer> search(String fullname, String address, String phoneNumber, String email, int productQuantityMin, int productQuantityMax, double moneySpentMin, double moneySpentMax, int purchaseNumberMin, int purchaseNumberMax) {
         List<Customer> listCustomerSearch = new ArrayList<>();
         for(Customer customer1 : AppConfig.listCustomer){
-            if(customer1.getUsername().equals(fullname)||customer1.getAddress().equals(address)|| customer1.getPhoneNumber().equals(phoneNumber)||customer1.getEmail().equals(email)|| (customer1.getProductQuantity()>=productQuantityMin&customer1.getProductQuantity()<=productQuantityMax)||(customer1.getMoneySpent()>= moneySpentMin & customer1.getMoneySpent()<= moneySpentMax) ||(customer1.getPurchaseNumber()<=productQuantityMax & customer1.getPurchaseNumber()>=productQuantityMin)){
+            if(customer1.getUsername().equalsIgnoreCase(fullname)||customer1.getAddress().equalsIgnoreCase(address)|| customer1.getPhoneNumber().equalsIgnoreCase(phoneNumber)||customer1.getEmail().equalsIgnoreCase(email)|| (customer1.getProductQuantity()>=productQuantityMin&customer1.getProductQuantity()<=productQuantityMax)||(customer1.getMoneySpent()>= moneySpentMin & customer1.getMoneySpent()<= moneySpentMax) ||(customer1.getPurchaseNumber()<=productQuantityMax & customer1.getPurchaseNumber()>=productQuantityMin)){
                 listCustomerSearch.add(customer1);
             }
         }
@@ -163,6 +207,7 @@ public class CustomerServiceImpl implements CustomerService {
                 break;
             }
         }
+        writeFileCustomer();
         return rs;
     }
 
@@ -176,13 +221,25 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public List<Customer> findMoneySpentMax() {
-        List<Customer> listOldCustomer = new ArrayList<>();
+        List<Customer> listMoneySpentMax = new ArrayList<>();
+        List<Customer> listMoneySpent= new ArrayList<>();
         for(Customer customer1 : AppConfig.listCustomer) {
-            if(customer1.getPurchaseNumber()>1){
-                listOldCustomer.add(customer1);
-            }
+            listMoneySpent.add(customer1);
         }
-        return listOldCustomer;
+        Collections.sort(listMoneySpent, new Comparator<Customer>() {
+            public int compare(Customer o1, Customer o2) {
+                return Double.compare(o2.getMoneySpent(), o1.getMoneySpent());
+            }
+        });
+        int max = 0;
+        for(Customer customer1 : listMoneySpent) {
+            if(max <= customer1.getProductQuantity()){
+                max = customer1.getProductQuantity();
+                listMoneySpentMax.add(customer1);
+            }
+            else break;
+        }
+        return listMoneySpentMax;
     }
 
     @Override
@@ -205,10 +262,10 @@ public class CustomerServiceImpl implements CustomerService {
             }
             else break;
         }
-        System.out.println("******Thông tin các khách hàng mua nhiều sản phẩm nhất:");
-        for(Customer customer1 : listProductQuantityMax) {
-            System.out.println(customer1.toString());
-        }
+//        System.out.println("******Thông tin các khách hàng mua nhiều sản phẩm nhất:");
+//        for(Customer customer1 : listProductQuantityMax) {
+//            System.out.println(customer1.toString());
+//        }
         return listProductQuantityMax;
     }
 
@@ -221,6 +278,15 @@ public class CustomerServiceImpl implements CustomerService {
             }
         }
         return listOldCustomer;
+    }
+
+    @Override
+    public int statisticMoney(int minMoney, int maxMoney) {
+        int rs = 0;
+        for (Customer c : AppConfig.listCustomer) {
+            if(c.getMoneySpent() >= minMoney && c.getMoneySpent() <= maxMoney) rs++;
+        }
+        return rs;
     }
 
     @Override

@@ -10,4 +10,6 @@ public class AppConfig {
     public static int countCus = 1;
 
     public static List<Customer> listCustomer = new ArrayList<>();
+
+    public static final String FILE_CUSTOMER = "D:\\customer.txt";
 }

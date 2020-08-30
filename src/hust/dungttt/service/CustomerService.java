@@ -10,7 +10,7 @@ public interface CustomerService {
 
     Customer update(Customer customer);
 
-    List<Customer> search(String fullname,String address, String phoneNumber, String email, int productQuantityMin, int productQuantityMax, double moneySpentMin, double moneySpentMax, int purchaseNumberMin, int purchaseNumberMax)  ;
+    List<Customer> search(String fullname,String address, String phoneNumber, String email, int productQuantityMin, int productQuantityMax, double moneySpentMin, double moneySpentMax, int purchaseNumberMin, int purchaseNumberMax);
 
     boolean delete(int id);
 
@@ -22,5 +22,21 @@ public interface CustomerService {
 
     List<Customer> findOldCustomer();
 
+    int statisticMoney(int minMoney, int maxMoney);
+
     Customer findById(int id);
+
+    String checkFullName();
+
+    String checkPhone();
+
+    String checkAddress();
+
+    String checkDateOfBirth();
+
+    String checkEmail();
+
+    boolean readFileCustomer();
+
+    boolean writeFileCustomer();
 }

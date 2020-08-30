@@ -56,6 +56,23 @@ public class Customer {
                 '}';
     }
 
+    public String toStringFile() {
+        return "".concat(String.valueOf(id)).concat("#")
+                .concat(username).concat("#")
+                .concat(password).concat("#")
+                .concat(fullName).concat("#")
+                .concat(dateOfBirth).concat("#")
+                .concat(address).concat("#")
+                .concat(phoneNumber).concat("#")
+                .concat(email).concat("#")
+                .concat(String.valueOf(productQuantity)).concat("#")
+                .concat(String.valueOf(moneySpent)).concat("#")
+                .concat(String.valueOf(purchaseNumber)).concat("#")
+                .concat(String.valueOf(createDate.getTime())).concat("#")
+                .concat(String.valueOf(modifyDate.getTime())).concat("#")
+                .concat(String.valueOf(deleted));
+    }
+
     public int getId() {
         return id;
     }
